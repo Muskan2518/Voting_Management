@@ -18,7 +18,7 @@ const userSchema = new Schema({
     required: true
   },
   name: { 
-    type: String, unique: true, sparse: true } // <-- fixes the issue
+    type: String,  sparse: true } // <-- fixes the issue
 
 }, {
   timestamps: {                    // Automatically adds:
@@ -27,4 +27,4 @@ const userSchema = new Schema({
   }
 });
 
-module.exports = model('User', userSchema);
+module.exports = model('users', userSchema);

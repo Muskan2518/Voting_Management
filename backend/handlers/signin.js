@@ -1,49 +1,42 @@
-// backend/handlers/signin.js
-const express = require('express');
-const router = express.Router();
-const fs = require('fs');
-const jwt = require('jsonwebtoken');
+const User = require('../models/users');
 const bcrypt = require('bcrypt');
-const User = require('../models/users'); // Adjust if your path is different
-const validator = require('validator');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
-// Load private key for signing JWT
-const privateKey = fs.readFileSync('./private_key.pem', 'utf8');
+const privateKey = fs.readFileSync('private_key.pem', 'utf8');
 
-// POST /signin
-router.post('/signin', async (req, res) => {
+const signin = async (req, res) => {
+  const { name, password } = req.body;
+
   try {
-    const { email, password } = req.body;
+    const user = await User.findOne({ name });
+    if (!user) return res.status(400).json({ message: 'User not found' });
 
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
-    }
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
 
-    if (!password || password.length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters' });
-    }
+    const expiresIn = 3600; // seconds = 1 hour
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ message: 'Incorrect credentials' });
-    }
+    const token = jwt.sign(
+      { id: user._id, name: user.name },
+      privateKey,
+      { algorithm: 'RS256', expiresIn: expiresIn }
+    );
 
-    const payload = { userId: user._id, email: user.email };
-    const token = jwt.sign(payload, privateKey, { algorithm: 'RS256', expiresIn: '1h' });
-
-    return res.status(200).json({
+    return res.json({
       user: {
         _id: user._id,
         email: user.email,
-        name: user.name || ''
+        name: user.name
       },
       token,
-      expires_in: 3600
+      expires_in: expiresIn
     });
+
   } catch (error) {
     console.error('Signin error:', error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-module.exports = router;
+module.exports = signin;
