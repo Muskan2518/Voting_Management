@@ -40,7 +40,19 @@ app.get('/api/ping', (req, res) => {
 const signup = require('./handlers/signup');  // Import the signin function
 app.post('/signup', signup); 
 const signinRouter = require('./handlers/signin');
-app.use('/signin', signinRouter);
+app.post('/signin', signinRouter);
+const createElectionRouter = require('./handlers/createElection');
+app.use('/', createElectionRouter);
+const getElection=require('./handlers/getElection');
+app.use('/',getElection);
+const getAllElectionsRoute = require('./handlers/getAllElections');
+app.use('/', getAllElectionsRoute);
+const castVote=require('./handlers/castVote');
+app.use('/',castVote)
+const voteHistory=require('./handlers/voteHistory');
+app.use('/',voteHistory)
+
+
 
 
 const PORT = process.env.PORT || 5000;
