@@ -25,7 +25,9 @@ router.get('/vote-history', async (req, res) => {
     const history = await Promise.all(
       votes.map(async (vote) => {
         const election = await Election.findById(vote.election_id).lean();
-        const contestant = election?.contestants?.id(vote.contestant_id);
+        const contestant = election?.contestants?.find(
+          (c) => c._id.toString() === vote.contestant_id.toString()
+        );
         return {
           election_title: election?.title || "Unknown",
           election_code: election?.code || "Unknown",
